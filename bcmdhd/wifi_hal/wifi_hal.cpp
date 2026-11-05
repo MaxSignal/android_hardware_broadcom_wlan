@@ -301,14 +301,18 @@ wifi_error wifi_initialize(wifi_handle *handle)
 
     if ((wifi_add_membership(*handle, "scan") < 0) ||
         (wifi_add_membership(*handle, "mlme")  < 0) ||
-        (wifi_add_membership(*handle, "regulatory") < 0) ||
-        (wifi_add_membership(*handle, "vendor") < 0)) {
+        (wifi_add_membership(*handle, "regulatory") < 0)) {
         ALOGE("Add membership failed");
         nl_socket_free(cmd_sock);
         nl_socket_free(event_sock);
         pthread_mutex_destroy(&info->cb_lock);
         free(info);
         return WIFI_ERROR_NOT_AVAILABLE;
+    }
+
+    // kernels before 3.14 have no nl80211 vendor commands/events: run without them
+    if (wifi_add_membership(*handle, "vendor") < 0) {
+        ALOGW("nl80211 vendor events not available");
     }
 
     // ALOGI("Found %d interfaces", info->num_interfaces);
